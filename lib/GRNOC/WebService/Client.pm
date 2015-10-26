@@ -3,9 +3,6 @@
 #-----
 #----- Copyright(C) 2015 The Trustees of Indiana University
 #--------------------------------------------------------------------
-#----- $HeadURL: svn+ssh://svn.grnoc.iu.edu/grnoc/perl-lib/GRNOC-WebService-Client/trunk/lib/GRNOC/WebService/Client.pm $
-#----- $Id: Client.pm 37551 2015-06-02 21:21:14Z daldoyle $
-#-----
 #----- module for interacting with cosign protected grnoc web services
 #---------------------------------------------------------------------
 
