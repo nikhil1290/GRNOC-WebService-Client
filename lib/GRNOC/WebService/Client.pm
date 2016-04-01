@@ -295,10 +295,27 @@ sub _fetch_url {
         print "Request is initiated...\n"; 
     }
 
-
+    my $timed_out = 0; #timeout check for $request
+    local $SIG{ALRM} = sub {
+        #request has timed out
+        $timed_out = 1;
+    };
+    if(defined $self->{'timeout'}){
+        #if timeout is defined
+        alarm $self->{'timeout'};
+    }
+    else{
+        # don't alarm
+        alarm 0;
+    }
     #--- get the initial URL
     my $result = $ua->request($request);
-
+    alarm 0;
+    if($timed_out){
+        #Request timed out--->alarm
+        $self->_set_error("Request timeout.." . $request->uri());
+        return undef;
+    }
     if ($result->is_success){
 
         my $content = $result->content;
@@ -321,10 +338,24 @@ sub _fetch_url {
             $form->value("login",$username);
             $form->value("password",$passwd);
             my $request2 = $form->click;
-            
+            local $SIG{ALRM} = sub {
+                #request2 timed out
+                $timed_out = 1;
+            };
+            if(defined $self->{'timeout'}){
+                alarm $self->{'timeout'};
+            }
+            else{
+                alarm 0;
+            }
             #--- submit form
             my $result2 = $ua->request($request2);
-
+            alarm 0;
+            if($timed_out){
+                #request2 timed out----> alarm
+                $self->_set_error("Request timeout while authing to cosign.." . $request2->uri());
+                return undef;
+            }
             if ($self->{"timing"}) {
                 $self->_do_timing("Sent credentials to Cosign");
             }
