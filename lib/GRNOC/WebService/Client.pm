@@ -435,6 +435,9 @@ sub AUTOLOAD {
     my @stuff = split('::',$name);
     $name = pop(@stuff);
 
+    # clear error from last call
+    $self->{'error'} = undef;
+
     #--- set up the parameters
     my $params = {
         @_
