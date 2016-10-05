@@ -1,5 +1,5 @@
 Name:           perl-GRNOC-WebService-Client
-Version:        1.3.2
+Version:        1.3.3
 Release:        1%{?dist}
 Summary:        GRNOC::WebService::Client Perl module
 License:        GRNOC

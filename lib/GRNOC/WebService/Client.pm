@@ -28,7 +28,7 @@ use List::Util;
 
 $HTTP::Request::Common::DYNAMIC_FILE_UPLOAD = 1;
 
-our $VERSION = '1.3.2';
+our $VERSION = '1.3.3';
 
 use constant DEFAULT_LIMIT => 1000;
 

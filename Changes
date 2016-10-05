@@ -1,3 +1,11 @@
+GRNOC::WebService::Client v1.3.3 -- Wed Oct 5 2016
+===================================================
+
+Bug Fixes:
+ * ISSUE=2171 PROJ=160 Clear error state between subsequent calls to avoid cases where
+error state would persist after a transient problem.
+
+
 GRNOC::WebService::Client v1.3.2 -- Tue Jun 02 2015
 ===================================================
 
