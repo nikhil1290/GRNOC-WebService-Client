@@ -29,7 +29,7 @@ WriteMakefile(
               clean               => { FILES => 'GRNOC-WebService-Client*' },
              );
 
-push(@ARGV, '-apxs', '/usr/sbin/apxs');
+push(@ARGV, '-apxs', (-e '/usr/bin/apxs') ? '/usr/bin/apxs' : '/usr/sbin/apxs');
 push(@ARGV, '-documentroot', "$FindBin::Bin/t/htdocs/");
 
 Apache::TestMM::filter_args();
