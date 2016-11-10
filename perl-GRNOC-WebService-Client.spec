@@ -12,7 +12,6 @@ BuildRequires:  mod_perl
 BuildRequires:  httpd-devel
 BuildRequires:  ImageMagick-perl
 BuildRequires:  perl-GRNOC-WebService >= 1.2.5
-BuildRequires:  perl-Apache-Test
 BuildRequires:  mod_perl-devel
 Requires:       perl >= 5.8.8
 Requires:       perl-GRNOC-Config >= 1.0.7
