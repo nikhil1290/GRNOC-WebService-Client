@@ -131,6 +131,20 @@ sub _setup_urls {
     return $count;
 }
 
+sub _can_retry {
+
+    my $self = shift;
+    my $error_code = shift;
+
+    foreach  my $http_code ( @{$self->{'http_retry_codes'}} ){
+        if(  $error_code eq $http_code ){
+            return 1;
+        }
+    }
+    
+    return undef;
+}
+
 #-- this loads config which contains the nameserver urls, basically bootstrapping.
 sub _load_config {
     my $self    = shift;
@@ -214,6 +228,7 @@ sub _set_error {
 
     my $self        = shift;
     my $error       = shift;
+    my $error_code  = shift;
 
     if ($self->{'debug'}) {
         #--- printing out full stack trace might reveal passwords to the constructor
@@ -227,6 +242,8 @@ sub _set_error {
     if ($self->{'debug'}){
         warn $self->{'error'};
     }
+    
+    $self->{'error_code'} = $error_code;
 
 }
 
@@ -279,7 +296,15 @@ sub _fetch_url {
     my $realm       = $self->{'realm'};
     my $cookieJar   = $self->{'cookieJar'};
     my $ua          = $self->{'ua'};
-
+    my $retries     = $self->{'retries'};
+    my $can_retry;
+    
+    #reset that we have to retry again
+    $self->{'should_retry'} = 0;
+    
+    #reset error and error_code
+    $self->{'error'} = undef;
+    $self->{'error_code'} = undef;
 
     #--- set credentials for basic auth if given
     #--- this does not use LWP::UserAgent->credentials because that appears to do two requests
@@ -313,9 +338,18 @@ sub _fetch_url {
     alarm 0;
     if($timed_out){
         #Request timed out--->alarm
-        $self->_set_error("Request timeout.." . $request->uri());
+        $self->_set_error(error      => "Request timeout.." . $request->uri(),
+                          error_code =>  "408" );
+        #check if this error code can be retried
+        if( $self->_can_retry( "401" ) && $retries > 0){
+            
+            #try to fetch the url again
+            $self->set_retries( $retries - 1 );
+            $self->{'should_retry'} = 1;
+        }
         return undef;
     }
+
     if ($result->is_success){
 
         my $content = $result->content;
@@ -333,7 +367,7 @@ sub _fetch_url {
                 $self->_set_error("Redirected to something I can't parse:\n" . $content . "\n");
                 return undef;
             }
-            
+
             #--- fill out login parameters
             $form->value("login",$username);
             $form->value("password",$passwd);
@@ -353,9 +387,20 @@ sub _fetch_url {
             alarm 0;
             if($timed_out){
                 #request2 timed out----> alarm
-                $self->_set_error("Request timeout while authing to cosign.." . $request2->uri());
+                $self->_set_error(error => "Request timeout while authing to cosign.." . $request2->uri(),
+                                  error_code => "408");
+             
+                #check if this error code can be retried
+                if( $self->_can_retry( "408" ) && $retries > 0){
+            
+                    #try to fetch the url again
+                    $self->set_retries( $retries - 1 );
+                    $self->{'should_retry'} = 1;
+        
+                }
                 return undef;
             }
+
             if ($self->{"timing"}) {
                 $self->_do_timing("Sent credentials to Cosign");
             }
@@ -364,17 +409,23 @@ sub _fetch_url {
             if ($result2->is_success){
 
                 my $content2 = $result2->content;            
-
+                
                 #--- Are we back at Cosign? If so, we're unauthorized.
                 if ($content2 =~ /<form action=\".*cosign-bin\/cosign\.cgi\"/mi){
-                    $self->_set_error( "Error: Authorization failed for: " . $request->uri());
+                    $self->_set_error( error => "Error: Authorization failed for: " . $request->uri(), error_code => "401");
+                    #check if this error code can be retried
+                    if( $self->_can_retry( "401" ) && $retries > 0){
+
+                        #try to fetch the url again
+                        $self->set_retries( $retries - 1 );
+                        $self->{'should_retry'} = 1;
+                    }
                     return undef;
                 }
 
                 #--- Otherwise we're good, return content
                 $self->{'content_type'} = $result2->header('content-type');
                 $self->{'headers'}      = $self->_parse_headers($result2);
-
                 return $content2;
             }
             else {
@@ -430,19 +481,24 @@ sub _parse_headers {
 sub AUTOLOAD {
     my $self = shift;
 
+
     #--- figure out the callled method
     my $name = our $AUTOLOAD;
     my @stuff = split('::',$name);
     $name = pop(@stuff);
 
-    # clear error from last call
+    # clear error,error_code from last call
     $self->{'error'} = undef;
+    $self->{'error_code'} = undef;
+
+    # we want to try to fetch the URL first time
+    $self->{'should_retry'} = 1;
 
     #--- set up the parameters
     my $params = {
         @_
     };
-
+    
     # did they specify a limit/offset parameter?
     my $limit = $params->{'limit'} || DEFAULT_LIMIT;
     my $offset = $params->{'offset'} || 0;
@@ -589,8 +645,11 @@ sub AUTOLOAD {
                 $req = HTTP::Request->new(GET => $base . "?" . $query_str);
             }
 
-            my $res = $self->_fetch_url($req);
-
+            my $res;
+            while( $self->{'should_retry'} ) {
+                warn Dumper( " retry " . $self->{'retries'} );
+                $res = $self->_fetch_url($req);
+            }
             #--- we have a successful result
             if (defined $res) {
 
@@ -743,6 +802,7 @@ sub new {
         cookieJar        => undef,
         method_parameter => "method",
         use_pagination => 0,
+        http_retry_codes => [ "408" ],
         @_,
         );
 
@@ -847,6 +907,12 @@ sub new {
         $self->_set_error("error_callback argument must be a code ref");
     }
 
+    #set retries to 0 initially
+    $self->set_retries( 0 );
+
+    #set retry to false
+    $self->{'should_retry'} = 0;
+
     return $self;
 }
 
@@ -893,6 +959,39 @@ sub get_headers {
     my $self = shift;
     
     return $self->{'headers'};
+}
+
+=head2
+
+
+=cut
+
+sub get_retries {
+
+    my $self = shift;
+
+    return $self->{'retries'};
+
+}
+
+=head2
+
+   
+=cut
+
+
+sub set_retries {
+
+    my $self   = shift;
+    my $retries = shift;
+    
+    if( !defined $retries ){
+        return undef;
+    }
+
+    $self->{'retries'} = $retries;
+
+    return 1;
 }
 
 =head2 set_raw_output
