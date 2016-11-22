@@ -948,9 +948,9 @@ sub get_retries {
 
 }
 
-=head2
+=head2 get_retry_interval
 
-    Returns the retry interval
+    Returns the retry interval in seconds
 
 =cut
 
@@ -982,9 +982,9 @@ sub set_retries {
     return 1;
 }
 
-=head2
+=head2 set_retry_interval
 
-    Sets the retry interval 
+    Sets the retry interval in seconds
 
 =cut
 
