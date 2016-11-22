@@ -14,7 +14,6 @@ use warnings;
 use GRNOC::WebService::Client::Paginator;
 use HTTP::Cookies;
 use HTML::Form;
-use LWP::UserAgent;
 use LWP::UserAgent::Determined;
 use Carp qw(longmess shortmess);
 use CGI;
@@ -26,10 +25,11 @@ use File::MMagic;
 use HTTP::Request::Common;
 use Fcntl qw(:flock);
 use List::Util;
+use Storable 'dclone';
 
 $HTTP::Request::Common::DYNAMIC_FILE_UPLOAD = 1;
 
-our $VERSION = '1.3.4';
+our $VERSION = '1.4.0';
 
 use constant DEFAULT_LIMIT => 1000;
 
@@ -442,22 +442,19 @@ sub AUTOLOAD {
     #---- figure out retries and retry interval
     my $retries = $self->{'retries'};
     my $retry_interval= $self->{'retry_interval'};
-    my $retry_string="";
+    my $retry_string;
 
-    
+    #---- ("3,3,3") : retry 3 times with 3 secs interval for each request
     if ( $retries > 0 ){
-        for(my $i=1;$i<=$retries;$i++) {
-            if ($i == $retries) {
-                $retry_string .= $retry_interval;
-            }
-            else {
-                $retry_string .= $retry_interval . ",";
-            }
-        }
+        $retry_string = join(",", ("$retry_interval") x $retries );
+        
+        #set the number of retires with retry interval for each
+        $self->{'ua'}->timing( $retry_string );
     }
-    
-    #set the number of retires with retry interval for each
-    $self->{'ua'}->timing( $retry_string );
+    else{
+        #if no retries, do not set retry interval
+        $self->{'ua'}->timing("");
+    }
     
     #--- set up the parameters
     my $params = {
@@ -743,6 +740,12 @@ sub AUTOLOAD {
 
 =cut
 
+=item retry_error_codes
+
+    hash of http error codes to retry the request on if the request fails
+
+=cut
+
 =back
 
 =cut
@@ -767,7 +770,7 @@ sub new {
         retry_error_codes => { '408' => 1,
                                '503' => 1,
                                '502' => 1,
-                               #'500' => 1,
+                               '500' => 1,
                                '504' => 1},
         @_,
         );
@@ -879,8 +882,9 @@ sub new {
     #set retry interval to 5s by default
     $self->set_retry_interval( 5 );
 
-    #set the retry codes
-    $self->{'ua'}->codes_to_determinate( $self->{'retry_error_codes'} );
+    #set the retry http error codes
+    my $retry_codes = dclone $self->{'retry_error_codes'};
+    $self->{'ua'}->codes_to_determinate( $retry_codes );
 
     return $self;
 }
@@ -932,7 +936,7 @@ sub get_headers {
 
 =head2 get_retries
 
-    Returns the number of retries for the last request
+    Returns the number of retries 
 
 =cut
 
@@ -960,7 +964,7 @@ sub get_retry_interval {
 
 =head2 set_retries
 
-    Sets the number of retries for the current request
+    Sets the number of retries if the initial request fails
 
 =cut
 
@@ -980,7 +984,7 @@ sub set_retries {
 
 =head2
 
-    Sets the retry interval for the current request
+    Sets the retry interval 
 
 =cut
 

@@ -14,6 +14,7 @@ BuildRequires:  ImageMagick-perl
 BuildRequires:  perl-GRNOC-WebService >= 1.2.5
 BuildRequires:  mod_perl-devel
 BuildRequires:  perl-Devel-Cover
+BuildRequires:  perl-JSON
 Requires:       perl >= 5.8.8
 Requires:       perl-GRNOC-Config >= 1.0.7
 Requires:       perl-JSON >= 2.0

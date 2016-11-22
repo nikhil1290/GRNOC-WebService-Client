@@ -15,7 +15,6 @@ sub get_counter {
     my $counter_file = shift;
 
      my $json_text = do {
-         warn ( $counter_file );
          open(my $fh, "<:encoding(UTF-8)", $counter_file) or die("Can't open \$counter_file\": $!\n");
          local $/;
          <$fh>

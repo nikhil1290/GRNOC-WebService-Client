@@ -11,8 +11,8 @@ my $counter_file = "$FindBin::Bin/count.json";
 my $retries;
 my $svc = GRNOC::WebService::Client->new( url => "http://localhost:8529/hello.cgi",
                                           raw_output => 1,
-                                          retry_error_codes => { '408' => 1,
-                                           } );
+                                          retry_error_codes => { '408' => 1 }
+                                                            );
 
 
 #clear the counter
