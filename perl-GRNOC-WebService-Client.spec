@@ -14,11 +14,11 @@ BuildRequires:  ImageMagick-perl
 BuildRequires:  perl-GRNOC-WebService >= 1.2.5
 BuildRequires:  mod_perl-devel
 BuildRequires:  perl-Devel-Cover
-BuildRequires:  perl-JSON
 Requires:       perl >= 5.8.8
 Requires:       perl-GRNOC-Config >= 1.0.7
 Requires:       perl-JSON >= 2.0
 Requires:       perl-JSON-XS >= 2.0
+Requires:       perl-LWP-UserAgent-Determined
 Requires:       perl-libwww-perl
 Requires:       perl-IO-Socket-SSL
 Requires:       perl-File-MMagic
