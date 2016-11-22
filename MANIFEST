@@ -6,19 +6,22 @@ lib/GRNOC/WebService/Client.pm
 lib/GRNOC/WebService/Client/Paginator.pm
 Makefile.PL
 MANIFEST			This list of files
+META.json			Module JSON meta-data (added by MakeMaker)
 META.yml
 perl-GRNOC-WebService-Client.spec
 README
 t/00-load.t
+t/Bad_JSON.t
 t/ChangeCredentials.t
 t/Client.t
-t/Bad_JSON.t
 t/conf/extra.conf.in
 t/conf/name_service.xml
+t/Helper.pm
+t/htdocs/hello.cgi
 t/htdocs/image.cgi
-t/htdocs/not_json.html
 t/htdocs/image.jpg
 t/htdocs/name_service.cgi
+t/htdocs/not_json.html
 t/htdocs/protected/auth_file
 t/htdocs/protected/protected.cgi
 t/htdocs/test.cgi
@@ -29,4 +32,5 @@ t/Paginator.t
 t/pod-coverage.t
 t/pod.t
 t/RawOutput.t
-META.json                                Module JSON meta-data (added by MakeMaker)
+t/retries.t
+
