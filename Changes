@@ -1,3 +1,9 @@
+GRNOC::WebService::Client v1.4.0 -- Tue Nov 29 2016
+====================================================
+New Featues:
+    *ISSUE=2804 PROJ=161 Adding ability to retry webservice requests on given HTTP status codes
+
+
 GRNOC::WebService::Client v1.3.3 -- Wed Oct 5 2016
 ===================================================
 

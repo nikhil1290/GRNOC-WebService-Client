@@ -14,7 +14,7 @@ use warnings;
 use GRNOC::WebService::Client::Paginator;
 use HTTP::Cookies;
 use HTML::Form;
-use LWP::UserAgent;
+use LWP::UserAgent::Determined;
 use Carp qw(longmess shortmess);
 use CGI;
 use JSON::XS;
@@ -25,10 +25,11 @@ use File::MMagic;
 use HTTP::Request::Common;
 use Fcntl qw(:flock);
 use List::Util;
+use Storable 'dclone';
 
 $HTTP::Request::Common::DYNAMIC_FILE_UPLOAD = 1;
 
-our $VERSION = '1.3.3';
+our $VERSION = '1.4.0';
 
 use constant DEFAULT_LIMIT => 1000;
 
@@ -438,6 +439,23 @@ sub AUTOLOAD {
     # clear error from last call
     $self->{'error'} = undef;
 
+    #---- figure out retries and retry interval
+    my $retries = $self->{'retries'};
+    my $retry_interval= $self->{'retry_interval'};
+    my $retry_string;
+
+    #---- ("3,3,3") : retry 3 times with 3 secs interval for each request
+    if ( $retries > 0 ){
+        $retry_string = join(",", ("$retry_interval") x $retries );
+        
+        #set the number of retires with retry interval for each
+        $self->{'ua'}->timing( $retry_string );
+    }
+    else{
+        #if no retries, do not set retry interval
+        $self->{'ua'}->timing("");
+    }
+    
     #--- set up the parameters
     my $params = {
         @_
@@ -722,6 +740,12 @@ sub AUTOLOAD {
 
 =cut
 
+=item retry_error_codes
+
+    hash of http error codes to retry the request on if the request fails
+
+=cut
+
 =back
 
 =cut
@@ -743,6 +767,11 @@ sub new {
         cookieJar        => undef,
         method_parameter => "method",
         use_pagination => 0,
+        retry_error_codes => { '408' => 1,
+                               '503' => 1,
+                               '502' => 1,
+                               '500' => 1,
+                               '504' => 1},
         @_,
         );
 
@@ -814,10 +843,10 @@ sub new {
     }
 
     if ($self->{'use_keep_alive'}) {
-        $self->{'ua'}   = LWP::UserAgent->new(keep_alive => 1, agent => $self->{'user_agent'});
+        $self->{'ua'}   = LWP::UserAgent::Determined->new(keep_alive => 1, agent => $self->{'user_agent'});
     }
     else {
-        $self->{'ua'}   = LWP::UserAgent->new( agent => $self->{'user_agent'});
+        $self->{'ua'}   = LWP::UserAgent::Determined->new( agent => $self->{'user_agent'});
     }
 
     #---- check to see if we need to use old style urls. This allows us to use web services that don't parse semicolons the same as ampersands.
@@ -846,6 +875,16 @@ sub new {
         $self->{'error_callback'} = undef;
         $self->_set_error("error_callback argument must be a code ref");
     }
+
+    #set retries to 0 initially
+    $self->set_retries( 0 );
+
+    #set retry interval to 5s by default
+    $self->set_retry_interval( 5 );
+
+    #set the retry http error codes
+    my $retry_codes = dclone $self->{'retry_error_codes'};
+    $self->{'ua'}->codes_to_determinate( $retry_codes );
 
     return $self;
 }
@@ -893,6 +932,74 @@ sub get_headers {
     my $self = shift;
     
     return $self->{'headers'};
+}
+
+=head2 get_retries
+
+    Returns the number of retries 
+
+=cut
+
+sub get_retries {
+
+    my $self = shift;
+
+    return $self->{'retries'};
+
+}
+
+=head2 get_retry_interval
+
+    Returns the retry interval in seconds
+
+=cut
+
+sub get_retry_interval {
+
+    my $self = shift;
+
+    return $self->{'retry_interval'};
+
+}
+
+=head2 set_retries
+
+    Sets the number of retries if the initial request fails
+
+=cut
+
+sub set_retries {
+
+    my $self   = shift;
+    my $retries = shift;
+    
+    if( !defined $retries ){
+        return undef;
+    }
+
+    $self->{'retries'} = $retries;
+
+    return 1;
+}
+
+=head2 set_retry_interval
+
+    Sets the retry interval in seconds
+
+=cut
+
+sub set_retry_interval {
+
+    my $self   = shift;
+    my $retry_interval = shift;
+    
+    if( !defined $retry_interval ){
+        return undef;
+    }
+
+    $self->{'retry_interval'} = $retry_interval;
+
+    return 1;
 }
 
 =head2 set_raw_output
