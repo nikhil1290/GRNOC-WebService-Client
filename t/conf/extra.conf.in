@@ -19,3 +19,16 @@ PerlPassEnv PERL_TEST_HARNESS_DUMP_TAP
   Order allow,deny
   Allow from all
 </Location>
+
+<Location /second-protected>
+  AddHandler cgi-script .cgi
+  Options ExecCGI
+  
+  AuthType Basic
+  AuthName "The Realm"
+  AuthUserFile htdocs/second-protected/auth_file
+  Require dummy
+
+  Order allow,deny
+  Allow from all
+</Location>
