@@ -27,7 +27,7 @@ PerlPassEnv PERL_TEST_HARNESS_DUMP_TAP
   AuthType Basic
   AuthName "The Realm"
   AuthUserFile htdocs/second-protected/auth_file
-  Require dummy
+  Require user dummy
 
   Order allow,deny
   Allow from all
