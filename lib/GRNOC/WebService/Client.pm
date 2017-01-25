@@ -766,7 +766,8 @@ sub new {
         oldstyle_urls  => 0,
         cookieJar        => undef,
         method_parameter => "method",
-        use_pagination => 0,
+        use_pagination   => 0,
+        verify_hostname  => 1,
         retry_error_codes => { '408' => 1,
                                '503' => 1,
                                '502' => 1,
@@ -843,10 +844,10 @@ sub new {
     }
 
     if ($self->{'use_keep_alive'}) {
-        $self->{'ua'}   = LWP::UserAgent::Determined->new(keep_alive => 1, agent => $self->{'user_agent'});
+        $self->{'ua'}   = LWP::UserAgent::Determined->new(ssl_opts => {verify_hostname => $self->{'verify_hostname'}}, keep_alive => 1, agent => $self->{'user_agent'});
     }
     else {
-        $self->{'ua'}   = LWP::UserAgent::Determined->new( agent => $self->{'user_agent'});
+        $self->{'ua'}   = LWP::UserAgent::Determined->new(ssl_opts => {verify_hostname => $self->{'verify_hostname'}}, agent => $self->{'user_agent'});
     }
 
     #---- check to see if we need to use old style urls. This allows us to use web services that don't parse semicolons the same as ampersands.
