@@ -1,3 +1,8 @@
+GRNOC::WebService::Client v1.4.1 -- Fri Mar 17 2017
+====================================================
+Bug Fixes:
+    *PULLREQ=5 Adds ability to ignore missing or self-signed ssl certs.
+
 GRNOC::WebService::Client v1.4.0 -- Tue Nov 29 2016
 ====================================================
 New Featues:
