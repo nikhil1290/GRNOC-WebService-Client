@@ -740,6 +740,12 @@ sub AUTOLOAD {
 
 =cut
 
+=item verify_hostname
+
+    If set to 1 then ssl certs are validated. Set to 0 when working with untrusted or self-signed certs. Defaults to 1.
+
+=cut
+
 =item retry_error_codes
 
     hash of http error codes to retry the request on if the request fails
@@ -766,7 +772,8 @@ sub new {
         oldstyle_urls  => 0,
         cookieJar        => undef,
         method_parameter => "method",
-        use_pagination => 0,
+        use_pagination   => 0,
+        verify_hostname  => 1,
         retry_error_codes => { '408' => 1,
                                '503' => 1,
                                '502' => 1,
@@ -842,11 +849,18 @@ sub new {
         $self->{'urls'}{'0'}[0] = $self->{'url'};
     }
 
-    if ($self->{'use_keep_alive'}) {
-        $self->{'ua'}   = LWP::UserAgent::Determined->new(keep_alive => 1, agent => $self->{'user_agent'});
-    }
-    else {
-        $self->{'ua'}   = LWP::UserAgent::Determined->new( agent => $self->{'user_agent'});
+    {
+        # In older versions of LWP::UserAgent::Determined the ssl_opts
+        # parameter is not defined, and a warning is logged to the
+        # command line. Setting $^W to zero surpresses these warnings
+        # within this block.
+        local ($^W) = 0;
+
+        $self->{'ua'} = LWP::UserAgent::Determined->new(
+            agent      => $self->{'user_agent'},
+            ssl_opts   => {verify_hostname => $self->{'verify_hostname'}},
+            keep_alive => $self->{'use_keep_alive'}
+        );
     }
 
     #---- check to see if we need to use old style urls. This allows us to use web services that don't parse semicolons the same as ampersands.
