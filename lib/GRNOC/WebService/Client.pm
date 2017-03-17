@@ -740,6 +740,12 @@ sub AUTOLOAD {
 
 =cut
 
+=item verify_hostname
+
+    If set to 1 then ssl certs are validated. Set to 0 when working with untrusted or self-signed certs. Defaults to 1.
+
+=cut
+
 =item retry_error_codes
 
     hash of http error codes to retry the request on if the request fails
@@ -843,11 +849,14 @@ sub new {
         $self->{'urls'}{'0'}[0] = $self->{'url'};
     }
 
-    if ($self->{'use_keep_alive'}) {
-        $self->{'ua'}   = LWP::UserAgent::Determined->new(ssl_opts => {verify_hostname => $self->{'verify_hostname'}}, keep_alive => 1, agent => $self->{'user_agent'});
-    }
-    else {
-        $self->{'ua'}   = LWP::UserAgent::Determined->new(ssl_opts => {verify_hostname => $self->{'verify_hostname'}}, agent => $self->{'user_agent'});
+    {
+        no warnings;
+
+        $self->{'ua'} = LWP::UserAgent::Determined->new(
+            agent      => $self->{'user_agent'},
+            ssl_opts   => {verify_hostname => $self->{'verify_hostname'}},
+            keep_alive => $self->{'use_keep_alive'}
+        );
     }
 
     #---- check to see if we need to use old style urls. This allows us to use web services that don't parse semicolons the same as ampersands.
