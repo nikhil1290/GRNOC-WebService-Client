@@ -850,7 +850,11 @@ sub new {
     }
 
     {
-        no warnings;
+        # In older versions of LWP::UserAgent::Determined the ssl_opts
+        # parameter is not defined, and a warning is logged to the
+        # command line. Setting $^W to zero surpresses these warnings
+        # within this block.
+        local ($^W) = 0;
 
         $self->{'ua'} = LWP::UserAgent::Determined->new(
             agent      => $self->{'user_agent'},
