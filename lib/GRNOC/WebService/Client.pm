@@ -29,7 +29,7 @@ use Storable 'dclone';
 
 $HTTP::Request::Common::DYNAMIC_FILE_UPLOAD = 1;
 
-our $VERSION = '1.4.0';
+our $VERSION = '1.4.1';
 
 use constant DEFAULT_LIMIT => 1000;
 
