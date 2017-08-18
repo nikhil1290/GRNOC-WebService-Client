@@ -22,6 +22,8 @@ Requires:       perl-LWP-UserAgent-Determined
 Requires:       perl-libwww-perl
 Requires:       perl-IO-Socket-SSL
 Requires:       perl-File-MMagic
+Requires:       perl-XML-XPath
+Requires:       perl-XML-LibXML
 
 %description
 WebService Client Module
@@ -30,7 +32,7 @@ WebService Client Module
 %setup -q -n GRNOC-WebService-Client-%{version}
 
 %build
-%{__perl} Makefile.PL 
+%{__perl} Makefile.PL
 make dist
 
 %install
@@ -50,7 +52,7 @@ rm -rf $RPM_BUILD_ROOT
 %post
 
 if [ ! -e /usr/bin/wsutil ]
-  then 
+  then
     ln -s /usr/bin/globalnoc/webservice/wsutil.pl /usr/bin/wsutil
 fi
 
