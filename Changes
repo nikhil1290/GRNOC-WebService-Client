@@ -1,3 +1,10 @@
+GRNOC::WebService::Client v1.5.0-2 -- Thu Sep 14 2017
+===================================================
+
+Bug Fixes:
+ * ISSUE=3222 PROJ=160 Require https support on el7
+
+
 GRNOC::WebService::Client v1.5.0 -- Fri Aug 18 2017
 ===================================================
 New Features:

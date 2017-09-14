@@ -1,6 +1,6 @@
 Name:           perl-GRNOC-WebService-Client
 Version:        1.5.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        GRNOC::WebService::Client Perl module
 License:        GRNOC
 Group:          Development/Libraries
@@ -24,6 +24,10 @@ Requires:       perl-IO-Socket-SSL
 Requires:       perl-File-MMagic
 Requires:       perl-XML-XPath
 Requires:       perl-XML-LibXML
+
+%if 0%{?el7}
+Requires:       perl-LWP-Protocol-https
+%endif
 
 %description
 WebService Client Module
