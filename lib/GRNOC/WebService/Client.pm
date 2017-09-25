@@ -330,7 +330,7 @@ sub _fetch_url {
         $self->_set_error("Request timeout.." . $request->uri());
         return undef;
     }
-    if ($result->is_success){
+    if ($result->is_success && !defined($result->header('x-died'))){
 
         my $content = $result->content;
 
@@ -361,7 +361,9 @@ sub _fetch_url {
             $self->_do_timing("Failed");
         }
 
-        $self->_set_error("HTTP Error: " . $result->message . " : " . $request->uri());
+	my $error = $result->header('x-died') || $result->message;
+
+        $self->_set_error("HTTP Error: $error : " . $request->uri());
         return undef;
     }
 
@@ -415,7 +417,7 @@ sub _do_cosign_login {
     }
 
     #--- Got another 200 back
-    if ($result2->is_success){
+    if ($result2->is_success && !defined($result2->header('x-died'))){
 
         my $content2 = $result2->content;
 
@@ -433,7 +435,8 @@ sub _do_cosign_login {
     }
     else {
         #--- Something went wrong in getting the final url after cosign auth succeeded
-        $self->_set_error("HTTP Error after logging into Cosign: " . $result2->message);
+        my $error = $result2->header('x-died') || $result2->message;
+        $self->_set_error("HTTP Error after logging into Cosign: $error");
         return undef;
     }
 }
@@ -561,7 +564,7 @@ sub _do_ecp_login {
         $self->_do_timing("Returned to SP");
     }
     #--- Got another 200 back
-    if ($spres->is_success){
+    if ($spres->is_success && !defined($spres->header('x-died'))){
 
         my $spcontent = $spres->content;
 
@@ -574,8 +577,8 @@ sub _do_ecp_login {
         if ($self->{"timing"}) {
             $self->_do_timing("Failed");
         }
-
-        $self->_set_error("HTTP Error: " . $spres->message . " : " . $request->uri());
+	my $error = $spres->header('x-died') || $spres->message;
+        $self->_set_error("HTTP Error: $error : " . $request->uri());
         return undef;
     }
 }
