@@ -30,7 +30,7 @@ use XML::LibXML;
 
 $HTTP::Request::Common::DYNAMIC_FILE_UPLOAD = 1;
 
-our $VERSION = '1.5.0';
+our $VERSION = '1.5.1';
 
 use constant DEFAULT_LIMIT => 1000;
 use constant CONTENT_PAOS => 'application/vnd.paos+xml';
@@ -134,6 +134,31 @@ sub _setup_urls {
 
     return $count;
 }
+
+sub _load_default_realm {
+    
+    my $self =  shift;
+    
+    my $config_file = $self->{'config_file'};
+
+    #--- get the config
+    my $config = GRNOC::Config->new(config_file => $config_file,
+                                    force_array => 0);
+
+    if (!defined $config) {
+        $self->_set_error("unable to open $config_file: $!\n");
+        return;
+    }
+    
+    my $realm = $config->get("/config/realm");
+    
+    if( defined( $realm ) ) {
+        $self->{'default_realm'} = $realm;
+        return 1;
+    }
+
+}
+
 
 #-- this loads config which contains the nameserver urls, basically bootstrapping.
 sub _load_config {
@@ -284,6 +309,11 @@ sub _fetch_url {
     my $cookieJar   = $self->{'cookieJar'};
     my $ua          = $self->{'ua'};
 
+    #--- if we did not pass realm explicitly
+    #--- use realm from the config file
+    if( !defined( $self->{'realm'} )) {
+        $self->{'realm'} = $self->{'default_realm'};
+    }
 
     #--- set credentials for basic auth if given
     #--- this does not use LWP::UserAgent->credentials because that appears to do two requests
@@ -953,6 +983,8 @@ sub new {
                                '502' => 1,
                                '500' => 1,
                                '504' => 1},
+        config_file    => "/etc/grnoc/webservice_client/config.xml",
+        default_realm  => undef,
         @_,
         );
 
@@ -1083,6 +1115,9 @@ sub new {
     $self->{'xpath'}->registerNs('saml' => 'urn:oasis:names:tc:SAML:2.0:assertion');
     $self->{'xpath'}->registerNs('saml2p' => 'urn:oasis:names:tc:SAML:2.0:protocol');
 
+    #load the default realm from config file             
+    $self->_load_default_realm();
+
     return $self;
 }
 
@@ -1177,6 +1212,20 @@ sub set_retries {
     $self->{'retries'} = $retries;
 
     return 1;
+}
+
+=head2 get_realm
+
+    Returns the realm set
+
+=cut
+
+sub get_realm {
+    
+    my $self = shift;
+    
+    return $self->{'realm'};
+    
 }
 
 =head2 set_retry_interval

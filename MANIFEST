@@ -10,12 +10,14 @@ META.json			Module JSON meta-data (added by MakeMaker)
 META.yml
 perl-GRNOC-WebService-Client.spec
 README
+conf/config.xml
 t/00-load.t
 t/Bad_JSON.t
 t/ChangeCredentials.t
 t/Client.t
 t/conf/extra.conf.in
 t/conf/name_service.xml
+t/conf/config.xml
 t/Helper.pm
 t/htdocs/hello.cgi
 t/htdocs/image.cgi
@@ -33,4 +35,4 @@ t/pod-coverage.t
 t/pod.t
 t/RawOutput.t
 t/retries.t
-
+t/realm.t
