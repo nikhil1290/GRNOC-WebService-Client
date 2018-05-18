@@ -135,6 +135,7 @@ sub _setup_urls {
     return $count;
 }
 
+#--- loads the default realm from the config file
 sub _load_default_realm {
     
     my $self =  shift;
@@ -1122,7 +1123,7 @@ sub new {
     $self->{'xpath'}->registerNs('saml2p' => 'urn:oasis:names:tc:SAML:2.0:protocol');
 
     #load the default realm from config file             
-    $self->_load_default_realm();
+    $self->_load_default_realm() if( -e $self->{'config_file'} );
 
     return $self;
 }
