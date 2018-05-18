@@ -143,7 +143,6 @@ sub _load_default_realm {
     my $config_file = $self->{'config_file'};
     my $username    = $self->{'uid'};
 
-
     #--- get the config
     my $config = GRNOC::Config->new(config_file => $config_file,
                                     force_array => 1);
